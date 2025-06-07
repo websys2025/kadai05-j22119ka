@@ -1,20 +1,59 @@
 <html lang="ja">
 <head>
     <meta charset="utf-8">
-    <title>演習課題5-2：外部APIの呼び出しテスト</title>
+    <title>演習課題5-2：天気APIの呼び出し</title>
 </head>
 <body>
-    <h1 id="msg">何かのAPI</h1>
+    <h1 id="msg">都道府県の天気情報</h1>
     <form name="apiform"><p>
-        何かのフォーム：<input type="text" name="form_data">
+        都道府県名：<input type="text" name="form_data">
         <button type="button" id="btn1" onclick="some_api(this.form)">実行</button>
     </p></form>
-    
+
     <div id="result"></div>
+
     <script>
+        // 都道府県名と対応する都市コードのマップ（必要に応じて拡張可能）
+        const cityCodes = {
+            "東京": "130010",
+            "大阪": "270000",
+            "名古屋": "230010",
+            "札幌": "016010",
+            "福岡": "400010",
+            "仙台": "040010",
+            "広島": "340010",
+            "高知": "390010",
+            "那覇": "471010"
+        };
+
         async function some_api(myForm) {
-            // ここにコードを書く
-            document.getElementById("result").innerHTML += myForm.form_data.value+"<br />";
+            const prefecture = myForm.form_data.value.trim();
+            const cityCode = cityCodes[prefecture];
+
+            if (!cityCode) {
+                document.getElementById("result").innerHTML += 
+                    `「${prefecture}」は対応していません。対応例：東京、大阪、名古屋...<br />`;
+                return;
+            }
+
+            const apiUrl = `https://weather.tsukumijima.net/api/forecast?city=${cityCode}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error("APIの取得に失敗しました。");
+
+                const data = await response.json();
+
+                document.getElementById("result").innerHTML += `
+                    <strong>${data.location.city} の天気</strong><br />
+                    今日：${data.forecasts[0].telop}<br />
+                    明日：${data.forecasts[1].telop}<br />
+                `;
+            } catch (error) {
+                document.getElementById("result").innerHTML += 
+                    "エラーが発生しました: " + error.message + "<br />";
+            }
+
             document.apiform.reset();
         }
     </script>
